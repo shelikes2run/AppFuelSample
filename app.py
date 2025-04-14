@@ -8,8 +8,8 @@ import io
 # --- Load Data ---
 @st.cache_data
 def load_data():
-    url1 = "https://raw.githubusercontent.com/shelikes2run/AppFuelSample/refs/heads/main/field_samples_2005_2014.csv"
-    url2 = "https://raw.githubusercontent.com/shelikes2run/AppFuelSample/refs/heads/main/field_samples_2015_present.csv"
+    url1 = "https://raw.githubusercontent.com/shelikes2run/AppFuelSample/main/field_samples_2005_2014.csv"
+    url2 = "https://raw.githubusercontent.com/shelikes2run/AppFuelSample/main/field_samples_2015_present.csv"
     df1 = pd.read_csv(url1)
     df2 = pd.read_csv(url2)
     df = pd.concat([df1, df2])
