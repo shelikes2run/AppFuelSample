@@ -1,0 +1,17 @@
+import pandas as pd
+
+# Load the full file you downloaded
+df = pd.read_csv("field_samples_full.csv")
+df.columns = ["Sample Id", "Date-Time", "Site Name", "SiteId", "Fuel Type", "Category", "Sub-Category", "Method", "Sample Avg Value", "Sample Status"]
+df["Date-Time"] = pd.to_datetime(df["Date-Time"], errors="coerce")
+df = df[df["Date-Time"].notnull()]
+df["Year"] = df["Date-Time"].dt.year
+
+# Split into two ranges
+df1 = df[df["Year"] <= 2014].drop(columns=["Year"])
+df2 = df[df["Year"] >= 2015].drop(columns=["Year"])
+
+df1.to_csv("field_samples_2005_2014.csv", index=False)
+df2.to_csv("field_samples_2015_present.csv", index=False)
+
+print(" Files saved!")
