@@ -8,9 +8,11 @@ import io
 # --- Load Data ---
 @st.cache_data
 def load_data():
-    url = "https://fems.fs2c.usda.gov/fuelmodel/sample/download?returnAll=&responseFormat=csv&siteId=All&sampleId=&startDate=2005-01-01T00:00:00.000Z&endDate=2025-03-25T23:00:00.000Z&filterByFuelId=&filterByStatus=Submitted&filterByCategory=All&filterBySubCategory=All&filterByMethod=All&sortBy=fuel_type&sortOrder=asc"
-    df = pd.read_csv(url)
-    df.columns = ["Sample Id", "Date-Time", "Site Name", "SiteId", "Fuel Type", "Category", "Sub-Category", "Method", "Sample Avg Value", "Sample Status"]
+    url1 = "https://raw.githubusercontent.com/shelikes2run/AppFuelSample/refs/heads/main/field_samples_2005_2014.csv"
+    url2 = "https://raw.githubusercontent.com/shelikes2run/AppFuelSample/refs/heads/main/field_samples_2015_present.csv"
+    df1 = pd.read_csv(url1)
+    df2 = pd.read_csv(url2)
+    df = pd.concat([df1, df2])
     df["Date-Time"] = pd.to_datetime(df["Date-Time"], errors="coerce")
     df = df[df["Date-Time"].notnull()]
     df["Date-Time"] = df["Date-Time"].dt.tz_localize(None)
