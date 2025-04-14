@@ -1,0 +1,3 @@
+Sample Id,Date-Time,Site Name,SiteId,Fuel Type,Category,Sub-Category,Method,Sample Avg Value,Sample Status
+1,2006-06-01T00:00:00,Site A,001,Grass,Forbs,Sub1,MethodA,0.25,Submitted
+2,2010-08-15T00:00:00,Site B,002,Shrubs,Dead,Sub2,MethodB,0.42,Submitted
