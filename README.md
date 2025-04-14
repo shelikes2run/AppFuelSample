@@ -19,11 +19,8 @@ pip install -r requirements.txt
 streamlit run app.py
 ```
 
-### Deploy on Streamlit Cloud
+### Deployed on Streamlit Cloud
 
-1. Push this repo to GitHub
-2. Go to [https://streamlit.io/cloud](https://streamlit.io/cloud)
-3. Connect your GitHub repo
-4. Select `app.py` as the main file
+1. https://appfuelsample-gvoxhxzzyefqcr2atsuqyc.streamlit.app/
 
 Enjoy!
