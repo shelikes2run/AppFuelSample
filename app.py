@@ -1,5 +1,6 @@
 import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 import seaborn as sns
 import streamlit as st
 from datetime import datetime
@@ -81,7 +82,10 @@ else:
             ax.plot(cat_hist["AlignDate"], cat_hist["Min"], linestyle=':', color='red', label="Hist Min")
             ax.plot(cat_hist["AlignDate"], cat_hist["Max"], linestyle=':', color='green', label="Hist Max")
 
-        ax.set_xlabel("Date")
+        ax.set_xlabel("Month")
+        ax.xaxis.set_major_locator(mdates.MonthLocator())
+        ax.xaxis.set_major_formatter(mdates.DateFormatter('%b')) #
+        fig.autofmt_xdate()
         ax.set_ylabel("Sample Avg Value")
         ax.grid(True)
         ax.legend()
