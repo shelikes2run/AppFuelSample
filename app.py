@@ -78,8 +78,8 @@ else:
         elif not historical.empty:
             cat_hist = hist_summary[hist_summary["Category"] == cat]
             ax.plot(cat_hist["AlignDate"], cat_hist["Avg"], linestyle='--', color='orange', label="Hist Avg")
-            ax.plot(cat_hist["AlignDate"], cat_hist["Min"], linestyle=':', color='gray', label="Hist Min")
-            ax.plot(cat_hist["AlignDate"], cat_hist["Max"], linestyle=':', color='gray', label="Hist Max")
+            ax.plot(cat_hist["AlignDate"], cat_hist["Min"], linestyle=':', color='red', label="Hist Min")
+            ax.plot(cat_hist["AlignDate"], cat_hist["Max"], linestyle=':', color='green', label="Hist Max")
 
         ax.set_xlabel("Date")
         ax.set_ylabel("Sample Avg Value")
