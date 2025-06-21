@@ -2,8 +2,8 @@ name: Update FUEL Model Samples Daily
 
 on:
   schedule:
-    - cron: '0 6 * * *'  # Runs every day at 6 AM UTC
-  workflow_dispatch:     # Allow manual trigger from GitHub UI
+    - cron: '0 6 * * *'  # 6 AM UTC daily
+  workflow_dispatch:
 
 jobs:
   update-fuel-data:
@@ -18,20 +18,20 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: 📦 Install Python dependencies
+      - name: 📦 Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install pandas
 
-      - name: 🚀 Run Fetch Script
+      - name: 🚀 Run Python fetch script
         run: |
-          echo "🔧 Running Python script with logging..."
-          python fetch_fuel_samples.py
+          echo "📄 Running fetch_fuel_samples.py..."
+          python fetch_fuel_samples.py || { echo "❌ Script failed"; exit 1; }
 
-      - name: 💾 Commit and push changes
+      - name: 💾 Commit changes
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          git add field_samples_*.csv
-          git commit -m "🔄 Auto-update FUEL model samples CSVs [skip ci]" || echo "No changes to commit"
-          git push
+          git add field_samples_*.csv || echo "⚠️ No files found to add"
+          git commit -m "🔄 Auto-update FUEL model samples CSVs [skip ci]" || echo "⚠️ Nothing to commit"
+          git push || echo "⚠️ Nothing to push"
