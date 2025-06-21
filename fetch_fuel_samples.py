@@ -1,53 +1,53 @@
-import requests
 import pandas as pd
-from io import StringIO
+from datetime import datetime
 
-# Rebuild the URL exactly
-URL = "https://fems.fs2c.usda.gov/fuelmodel/sample/download"
-PARAMS = {
-    "returnAll": "",
-    "responseFormat": "csv",
-    "siteId": "All",
-    "sampleId": "",
-    "startDate": "2005-01-01T00:00:00.000Z",
-    "endDate": "2025-06-21T23:00:00.000Z",
-    "filterByFuelId": "",
-    "filterByStatus": "Submitted",
-    "filterByCategory": "All",
-    "filterBySubCategory": "All",
-    "filterByMethod": "All",
-    "sortBy": "fuel_type",
-    "sortOrder": "asc"
-}
+# ================================
+# 📅 Define dynamic date range
+# ================================
+start_date = "2015-01-01T00:00:00.000Z"
+end_date = datetime.utcnow().strftime("%Y-%m-%dT23:00:00.000Z")
 
-# Create headers to mimic browser
-headers = {
-    "User-Agent": "Mozilla/5.0",
-    "Accept": "text/csv"
-}
+# ================================
+# 🔗 Build the URL dynamically
+# ================================
+url = (
+    "https://fems.fs2c.usda.gov/fuelmodel/sample/download"
+    f"?returnAll=&responseFormat=csv"
+    f"&siteId=All"
+    f"&sampleId="
+    f"&startDate={start_date}"
+    f"&endDate={end_date}"
+    f"&filterByFuelId="
+    f"&filterByStatus=Submitted"
+    f"&filterByCategory=All"
+    f"&filterBySubCategory=All"
+    f"&filterByMethod=All"
+    f"&sortBy=fuel_type"
+    f"&sortOrder=asc"
+)
 
-# Make the request
-response = requests.get(URL, headers=headers, params=PARAMS)
+print("📥 Fetching data from:")
+print(url)
 
-# Check and parse
-if response.status_code == 200:
-    df = pd.read_csv(StringIO(response.text))
-    
-    # Clean and export as before
+# ================================
+# 📊 Read and clean the data
+# ================================
+try:
+    df = pd.read_csv(url)
+
     df.columns = [
         "Sample Id", "Date-Time", "Site Name", "SiteId", "Fuel Type",
         "Category", "Sub-Category", "Method", "Sample Avg Value", "Sample Status"
     ]
+
     df["Date-Time"] = pd.to_datetime(df["Date-Time"], errors="coerce")
     df = df[df["Date-Time"].notnull()]
-    df["Year"] = df["Date-Time"].dt.year
 
-    recent = df[df["Year"] >= 2015].drop(columns="Year")
-    older = df[df["Year"] <= 2014].drop(columns="Year")
+    # Save to CSV
+    df.to_csv("field_samples_2015_present.csv", index=False)
 
-    recent.to_csv("field_samples_2015_present.csv", index=False)
-    older.to_csv("field_samples_2005_2014.csv", index=False)
+    print("✅ Data successfully saved to 'field_samples_2015_present.csv'.")
 
-    print("✅ CSV files generated.")
-else:
-    print(f"❌ Fetch failed: {response.status_code} - {response.reason}")
+except Exception as e:
+    print("❌ Error fetching or processing data:")
+    print(e)
