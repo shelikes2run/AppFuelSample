@@ -1,33 +1,33 @@
-name: Update Fuel Sample Data Daily
+name: Update Fuel Samples Daily
 
 on:
   schedule:
-    - cron: '0 12 * * *'  # Every day at 12:00 UTC
-  workflow_dispatch:      # Manual trigger option
+    - cron: '0 3 * * *'  # Daily at 3:00 AM UTC
+  workflow_dispatch:     # Allows manual run from GitHub interface
 
 jobs:
   update-fuel-data:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+    - name: ⬇️ Checkout Repository
+      uses: actions/checkout@v3
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
+    - name: 🐍 Set Up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
 
-      - name: Install Python dependencies
-        run: pip install pandas requests
+    - name: 📦 Install Dependencies
+      run: pip install pandas
 
-      - name: Run Python script to fetch 2015–present data
-        run: python fetch_fuel_samples.py
+    - name: 🚀 Run Fetch Script
+      run: python fetch_fuel_samples.py
 
-      - name: Commit and push updated CSV
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add field_samples_2015_present.csv
-          git commit -m "🔄 Auto-update: fuel sample data (2015–present) - $(date -u +'%Y-%m-%d')" || echo "No changes to commit"
-          git push
+    - name: 💾 Commit and Push Updated CSVs
+      run: |
+        git config user.name "GitHub Actions"
+        git config user.email "actions@github.com"
+        git add field_samples_*.csv
+        git commit -m "🔄 Auto-update fuel sample CSVs [$(date +'%Y-%m-%d')]"
+        git push
