@@ -2,7 +2,12 @@ import pandas as pd
 from datetime import datetime
 
 try:
-    print("🔄 Building query URL...")
+    print("🔗 Fetching fuel sample data...")
+    # ... all your logic ...
+    print("✅ Fuel sample update complete.")
+except Exception as e:
+    print(f"❌ Error: {e}")
+    raise
 
     URL = "https://fems.fs2c.usda.gov/fuelmodel/sample/download"
     PARAMS = {
