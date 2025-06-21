@@ -52,8 +52,3 @@ try:
 except Exception as e:
     print(f"❌ Error occurred: {e}")
     raise
-
-except Exception as e:
-    print("❌ ERROR OCCURRED:")
-    print(str(e))
-    exit(1)
