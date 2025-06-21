@@ -3,7 +3,7 @@ name: Update Fuel Sample Data
 on:
   schedule:
     - cron: '0 12 * * *'  # Runs daily at 12:00 UTC
-  workflow_dispatch:      # Allows manual runs
+  workflow_dispatch:      # Manual trigger option
 
 jobs:
   fetch-and-save:
@@ -15,7 +15,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: 3.10
+          python-version: '3.10'  # ✅ Fixed version
 
       - name: Install dependencies
         run: pip install pandas requests
@@ -29,8 +29,4 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add field_samples_*.csv
           git commit -m "🔄 Auto-update fuel sample CSVs [skip ci]" || echo "No changes to commit"
-          git push
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add field_samples_2005_2014.csv field_samples_2015_present.csv
-          git commit -m "🔄 Update fuel samples CSVs [auto]" || echo "No changes to commit"
           git push
