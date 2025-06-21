@@ -1,9 +1,8 @@
-import pandas as pd
 import requests
-from datetime import datetime
+import pandas as pd
 from io import StringIO
 
-# Construct URL
+# Rebuild the URL exactly
 URL = "https://fems.fs2c.usda.gov/fuelmodel/sample/download"
 PARAMS = {
     "returnAll": "",
@@ -11,7 +10,7 @@ PARAMS = {
     "siteId": "All",
     "sampleId": "",
     "startDate": "2005-01-01T00:00:00.000Z",
-    "endDate": datetime.utcnow().strftime("%Y-%m-%dT23:00:00.000Z"),
+    "endDate": "2025-06-21T23:00:00.000Z",
     "filterByFuelId": "",
     "filterByStatus": "Submitted",
     "filterByCategory": "All",
@@ -21,27 +20,24 @@ PARAMS = {
     "sortOrder": "asc"
 }
 
-HEADERS = {
-    "User-Agent": "Mozilla/5.0 (compatible; OpenAI-FuelFetcher/1.0)"
+# Create headers to mimic browser
+headers = {
+    "User-Agent": "Mozilla/5.0",
+    "Accept": "text/csv"
 }
 
-query_string = "&".join([f"{key}={value}" for key, value in PARAMS.items()])
-full_url = f"{URL}?{query_string}"
+# Make the request
+response = requests.get(URL, headers=headers, params=PARAMS)
 
-print(f"🔍 Fetching: {full_url}")
-
-try:
-    # Use requests with custom headers
-    response = requests.get(full_url, headers=HEADERS)
-    response.raise_for_status()  # Raise error if status code != 200
+# Check and parse
+if response.status_code == 200:
     df = pd.read_csv(StringIO(response.text))
-    print(f"✅ Downloaded: {len(df)} rows")
-
+    
+    # Clean and export as before
     df.columns = [
         "Sample Id", "Date-Time", "Site Name", "SiteId", "Fuel Type",
         "Category", "Sub-Category", "Method", "Sample Avg Value", "Sample Status"
     ]
-
     df["Date-Time"] = pd.to_datetime(df["Date-Time"], errors="coerce")
     df = df[df["Date-Time"].notnull()]
     df["Year"] = df["Date-Time"].dt.year
@@ -52,8 +48,6 @@ try:
     recent.to_csv("field_samples_2015_present.csv", index=False)
     older.to_csv("field_samples_2005_2014.csv", index=False)
 
-    print("✅ CSV files saved successfully.")
-
-except Exception as e:
-    print(f"❌ Fetch failed: {e}")
-    exit(1)
+    print("✅ CSV files generated.")
+else:
+    print(f"❌ Fetch failed: {response.status_code} - {response.reason}")
