@@ -1,48 +1,33 @@
-import pandas as pd
-from datetime import datetime
+name: Update Fuel Sample Data Daily
 
-# Define time range (start date fixed, end date is today)
-start_date = "2015-01-01T00:00:00.000Z"
-end_date = datetime.utcnow().strftime("%Y-%m-%dT23:00:00.000Z")
+on:
+  schedule:
+    - cron: '0 12 * * *'  # Every day at 12:00 UTC
+  workflow_dispatch:      # Manual trigger option
 
-# API Endpoint and parameters
-URL = "https://fems.fs2c.usda.gov/fuelmodel/sample/download"
-PARAMS = {
-    "returnAll": "",
-    "responseFormat": "csv",
-    "siteId": "All",
-    "sampleId": "",
-    "startDate": start_date,
-    "endDate": end_date,
-    "filterByFuelId": "",
-    "filterByStatus": "Submitted",
-    "filterByCategory": "All",
-    "filterBySubCategory": "All",
-    "filterByMethod": "All",
-    "sortBy": "fuel_type",
-    "sortOrder": "asc"
-}
+jobs:
+  update-fuel-data:
+    runs-on: ubuntu-latest
 
-# Build the query string and fetch the data
-query_string = "&".join([f"{key}={value}" for key, value in PARAMS.items()])
-full_url = f"{URL}?{query_string}"
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-try:
-    df = pd.read_csv(full_url)
-    df.columns = [
-        "Sample Id", "Date-Time", "Site Name", "SiteId", "Fuel Type",
-        "Category", "Sub-Category", "Method", "Sample Avg Value", "Sample Status"
-    ]
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
 
-    # Parse and clean datetime
-    df["Date-Time"] = pd.to_datetime(df["Date-Time"], errors="coerce")
-    df = df[df["Date-Time"].notnull()]
+      - name: Install Python dependencies
+        run: pip install pandas requests
 
-    # Save only the 2015+ records
-    today_str = datetime.today().strftime("%Y%m%d")
-    df.to_csv(f"field_samples_2015_present_{today_str}.csv", index=False)
+      - name: Run Python script to fetch 2015–present data
+        run: python fetch_fuel_samples.py
 
-    print(f"✅ Saved: field_samples_2015_present_{today_str}.csv")
-
-except Exception as e:
-    print("❌ Error:", e)
+      - name: Commit and push updated CSV
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add field_samples_2015_present.csv
+          git commit -m "🔄 Auto-update: fuel sample data (2015–present) - $(date -u +'%Y-%m-%d')" || echo "No changes to commit"
+          git push
