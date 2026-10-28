@@ -41,7 +41,7 @@ input[type=search],select{width:100%;background:var(--panel2);color:var(--text);
     </div>
   </aside>
   <section>
-    <div class="panel"><h2>Sample sites</h2><div id="map"></div>
+    <div class="panel" id="mapp"><h2>Sample sites</h2><div id="map"></div>
       <p class="small muted" style="margin:6px 0 0">Every site with field samples, colored by its latest sample. Click a site to add it to (or remove it from) the charts; hover for its latest values. Use the layer button (top right) for cameras and drought.</p></div>
     <div class="panel" id="nearp"><h2>Current vegetation &amp; drought near the selected site</h2><div id="near" class="small muted">Click a site on the map (or pick one in the list) to see the nearest live cameras and drought conditions there.</div>
       <p class="small muted" style="margin:8px 0 0">Cameras: <a href="https://alertcalifornia.org" target="_blank" rel="noopener">ALERTCalifornia</a> (UC San Diego; latest frame, refreshed every few minutes, CA) and the
@@ -167,40 +167,44 @@ function outlookRows(p) {
     return `<tr><td>${k.startsWith('obs') ? 'Observed' : 'Forecast'} ${n}-mo, ${esc(p[k + '_lbl'])}</td><td>${chip(msdiCol(p[k]), (p[k] ?? '–') + '')}</td><td>${chip(msdiCol(p[s]), (p[s] ?? '–') + '')}</td></tr>`; }).join('') + '</table>';
 }
 async function initContext() {
-  const rC = L.canvas({ padding: 0.3 });
+  let rC, rD, gAlert, gPheno, gUsdm, gOut;
+  if (MAP) {
+  rC = L.canvas({ padding: 0.3 });
   MAP.createPane('drought'); MAP.getPane('drought').style.zIndex = 350;
-  const rD = L.canvas({ pane: 'drought' });
-  const gAlert = L.layerGroup(), gPheno = L.layerGroup(), gUsdm = L.layerGroup(), gOut = L.layerGroup();
-  const ctl = L.control.layers(null, { 'ALERTCalifornia cameras': gAlert, 'PhenoCam vegetation cameras': gPheno,
+  rD = L.canvas({ pane: 'drought' });
+  gAlert = L.layerGroup(), gPheno = L.layerGroup(), gUsdm = L.layerGroup(), gOut = L.layerGroup();
+  L.control.layers(null, { 'ALERTCalifornia cameras': gAlert, 'PhenoCam vegetation cameras': gPheno,
     'U.S. Drought Monitor (current)': gUsdm, 'CA drought outlook, MSDI next month': gOut }, { collapsed: true, position: 'topright' }).addTo(MAP);
   gAlert.addTo(MAP); gPheno.addTo(MAP);
+  }
   const jobs = [
     fetch(AC + 'all_cameras-v3.json').then(r => r.json()).then(d => { for (const f of d.features) { const p = f.properties, [lon, lat] = f.geometry.coordinates;
-      CTX.alert.push({ p, lat, lon }); L.circleMarker([lat, lon], { renderer: rC, radius: 3.5, weight: 1, color: '#003b46', fillColor: '#00d0ff', fillOpacity: 0.9 })
+      CTX.alert.push({ p, lat, lon }); MAP && L.circleMarker([lat, lon], { renderer: rC, radius: 3.5, weight: 1, color: '#003b46', fillColor: '#00d0ff', fillOpacity: 0.9 })
         .bindTooltip(`📷 ${esc(p.name)}`).bindPopup(() => alertPop(p, lat, lon), { maxWidth: 290 }).addTo(gAlert); } }),
     J('data/phenocams.json').then(d => { for (const c of d.cameras) { CTX.pheno.push(c);
-      L.circleMarker([c.lat, c.lon], { renderer: rC, radius: 4.5, weight: 1, color: '#2b0050', fillColor: '#c48bff', fillOpacity: 0.95 })
+      MAP && L.circleMarker([c.lat, c.lon], { renderer: rC, radius: 4.5, weight: 1, color: '#2b0050', fillColor: '#c48bff', fillOpacity: 0.95 })
         .bindTooltip(`🌿 ${esc(c.site)} (${esc(c.veg)})`).bindPopup(() => phenoPop(c), { maxWidth: 290 }).addTo(gPheno); } }),
     J('data/usdm.geojson').then(d => { CTX.usdm = d;
-      L.geoJSON(d, { pane: 'drought', renderer: rD, style: f => ({ weight: 0, fillColor: DCOL[f.properties.dm], fillOpacity: 0.45 }) })
+      MAP && L.geoJSON(d, { pane: 'drought', renderer: rD, style: f => ({ weight: 0, fillColor: DCOL[f.properties.dm], fillOpacity: 0.45 }) })
         .bindTooltip(l => `${esc(l.feature.properties.label)} · USDM ${esc(d.metadata.valid || '')}`, { sticky: true }).addTo(gUsdm); }),
     fetch('https://shelikes2run.github.io/ca-rx-planner/data/drought_spi_forecast.geojson').then(r => r.json()).then(d => { CTX.outlook = d;
-      L.geoJSON(d, { pane: 'drought', renderer: rD, style: f => ({ weight: 0.6, color: '#555', fillColor: msdiCol(f.properties.msdi3_m1), fillOpacity: 0.55 }) })
+      MAP && L.geoJSON(d, { pane: 'drought', renderer: rD, style: f => ({ weight: 0.6, color: '#555', fillColor: msdiCol(f.properties.msdi3_m1), fillOpacity: 0.55 }) })
         .bindTooltip(l => `MSDI ${esc(l.feature.properties.msdi3_m1_lbl)}: ${l.feature.properties.msdi3_m1} (${msdiTxt(l.feature.properties.msdi3_m1)})`, { sticky: true })
         .bindPopup(l => '<b>Drought forecast for this basin</b><br>' + outlookRows(l.feature.properties)).addTo(gOut); }),
   ];
-  const leg = L.control({ position: 'bottomright' });
+  if (MAP) { const leg = L.control({ position: 'bottomright' });
   leg.onAdd = () => { const d = L.DomUtil.create('div', 'legend'); d.innerHTML = '<i style="background:#00d0ff"></i>ALERTCalifornia camera<br><i style="background:#c48bff"></i>PhenoCam<br><b>Drought</b> ' +
     DCOL.map((c, i) => `<i style="background:${c};border-radius:2px;margin:0 1px 0 4px"></i>D${i}`).join(''); return d; };
-  leg.addTo(MAP);
+  leg.addTo(MAP); }
   await Promise.allSettled(jobs).then(r => r.forEach(x => x.status === 'rejected' && console.warn('context layer', x.reason)));
   paintNear();
 }
 let NEAR_ID = null;
+const EMBED = new URLSearchParams(location.search).get('embed') === '1';
 function paintNear() {
   const ids = [...S.sites], id = ids[ids.length - 1], el = $('near');
   if (!el) return;
-  if (id == null || !SITEPT[id]) { NEAR_ID = null; el.innerHTML = 'Click a site on the map (or pick one in the list) to see the nearest live cameras and drought conditions there.'; return; }
+  if (id == null || !SITEPT[id]) { NEAR_ID = null; el.innerHTML = (EMBED ? 'Click a sample site on the map' : 'Click a site on the map') + ' (or pick one in the list) to see the nearest live cameras and drought conditions there.'; return; }
   NEAR_ID = id;
   const [lat, lon, name] = SITEPT[id], here = [lat, lon], pt = [lon, lat], R = 40;
   const cams = [];
@@ -282,7 +286,10 @@ $('pdf').onclick = async () => {
   $('reset').onclick = () => { S.sites.clear(); S.cats.clear(); S.fuels.clear(); S.hy = null; S.months = new Set([...Array(12).keys()].map(m => m + 1)); paintMap();
     $('sq').value = $('fq').value = ''; $('cy').selectedIndex = 0; chips($('cats'), IDX.cats.map(c => [c, c]), S.cats, run); chips($('mo'), MON.map((m, i) => [i + 1, m]), S.months, run); listSites(); listFuels(); hyChips(); run(); };
   listSites(); listFuels(); hyChips(); run();
-  initMap().catch(e => { $('map').innerHTML = '<p class="small muted">Site map unavailable.</p>'; console.warn(e); });
+  if (EMBED) {   // inside the AGOL app: its map picks the site (?site=), so no page header or Leaflet map
+    document.querySelector('header').style.display = 'none'; $('mapp').style.display = 'none';
+    J('data/sites.geojson').then(gj => { for (const f of gj.features) SITEPT[f.properties.site_id] = [f.geometry.coordinates[1], f.geometry.coordinates[0], f.properties.site_name]; initContext(); });
+  } else initMap().catch(e => { $('map').innerHTML = '<p class="small muted">Site map unavailable.</p>'; console.warn(e); });
 })();
 </script>
 </body>

@@ -2,6 +2,8 @@
 
   docs/data/phenocams.json   active PhenoCam Network vegetation cameras (latest image within 60 days)
   docs/data/usdm.geojson     current U.S. Drought Monitor, simplified for the web
+  docs/data/cameras.geojson  ALERTCalifornia + PhenoCam cameras as flat points for the AGOL web map
+                             (image links always point at each camera's latest picture)
 
 ALERTCalifornia cameras and the CA drought outlook (UC Irvine MSDI/SPI, from the ca-rx-planner repo)
 are read live by the page itself, since those sources allow it. PhenoCam and the full-size Drought
@@ -44,6 +46,27 @@ def phenocams():
     print(f'phenocams: {len(rows)} active')
 
 
+def cameras():
+    feats = []
+    ac = 'https://cameras.alertcalifornia.org/public-camera-data/'
+    for f in get(ac + 'all_cameras-v3.json')['features']:
+        p, (lon, lat) = f['properties'], f['geometry']['coordinates'][:2]
+        feats.append({'type': 'Feature', 'geometry': {'type': 'Point', 'coordinates': [round(lon, 5), round(lat, 5)]},
+                      'properties': {'source': 'ALERTCalifornia', 'cam_id': p['id'], 'name': p['name'],
+                                     'area': (p.get('county') or '').title() + ' Co., ' + (p.get('state') or ''),
+                                     'veg': '', 'img': f"{ac}{p['id']}/latest-thumb.jpg", 'full': f"{ac}{p['id']}/latest-frame.jpg",
+                                     'page': 'https://cameras.alertcalifornia.org/', 'updated': 'Every few minutes'}})
+    pc = 'https://phenocam.nau.edu'
+    for c in json.loads((OUT / 'phenocams.json').read_text())['cameras']:
+        feats.append({'type': 'Feature', 'geometry': {'type': 'Point', 'coordinates': [c['lon'], c['lat']]},
+                      'properties': {'source': 'PhenoCam', 'cam_id': c['site'], 'name': c['site'], 'area': c['desc'],
+                                     'veg': c['veg'] + (' (' + c['species'] + ')' if c['species'] else ''),
+                                     'img': f"{pc}/data/latest/{c['site']}.jpg", 'full': f"{pc}/data/latest/{c['site']}.jpg",
+                                     'page': f"{pc}/webcam/sites/{c['site']}/", 'updated': 'Daily, latest ' + c['last']}})
+    (OUT / 'cameras.geojson').write_text(json.dumps({'type': 'FeatureCollection', 'features': feats}, separators=(',', ':')))
+    print(f'cameras: {len(feats)}')
+
+
 def usdm():
     from shapely.geometry import mapping, shape
     d = get('https://droughtmonitor.unl.edu/data/json/usdm_current.json', timeout=300)
@@ -66,7 +89,7 @@ def usdm():
 
 if __name__ == '__main__':
     OUT.mkdir(parents=True, exist_ok=True)
-    for fn in (phenocams, usdm):
+    for fn in (phenocams, cameras, usdm):
         try:
             fn()
         except Exception as e:  # keep the last good file
