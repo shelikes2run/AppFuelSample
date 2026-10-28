@@ -5,6 +5,8 @@
 <title>Field Sample Comparison</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.27.0/plotly.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
 :root{--bg:#1f2124;--panel:#2a2d31;--panel2:#33373c;--line:#43484e;--text:#e8eaed;--muted:#a5abb2;--acc:#3f7d4a;--link:#8ab4f8}
 *{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
@@ -20,7 +22,7 @@ input[type=search],select{width:100%;background:var(--panel2);color:var(--text);
 .chips{display:flex;flex-wrap:wrap;gap:4px}.chips button{background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:12px;padding:2px 9px;font:inherit;font-size:12px;cursor:pointer}
 .chips button.on{background:#7fb3ff;border-color:#7fb3ff;color:#111}.small{font-size:12px}.muted{color:var(--muted)}
 .btn{background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:6px;padding:5px 10px;font:inherit;font-size:13px;cursor:pointer;margin:2px 4px 2px 0}
-.btn:hover{border-color:#7fb3ff}.chart{height:420px}.sel{font-size:12px;color:var(--muted);margin-top:4px}
+.btn:hover{border-color:#7fb3ff}#map{height:430px;border-radius:8px}.legend{background:rgba(31,33,36,.92);color:#e8eaed;padding:6px 9px;border-radius:6px;font-size:12px;line-height:1.6}.legend i{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:6px;vertical-align:middle}.chart{height:420px}.sel{font-size:12px;color:var(--muted);margin-top:4px}
 </style>
 </head>
 <body>
@@ -39,6 +41,8 @@ input[type=search],select{width:100%;background:var(--panel2);color:var(--text);
     </div>
   </aside>
   <section>
+    <div class="panel"><h2>Sample sites</h2><div id="map"></div>
+      <p class="small muted" style="margin:6px 0 0">Every site with field samples, colored by its latest sample. Click a site to add it to (or remove it from) the charts; hover for its latest values.</p></div>
     <div class="panel"><div id="summary" class="small muted"></div><div id="charts"></div></div>
     <div class="panel"><h2>Export</h2>
       <button class="btn" id="csv">⬇ Filtered data (CSV)</button><button class="btn" id="pdf">⬇ All charts (PDF)</button>
@@ -62,7 +66,7 @@ function listSites() {
   const vis = IDX.sites.filter(s => !q || s.name.toLowerCase().includes(q)).slice(0, 400);
   $('sites').innerHTML = vis.map(s => `<label><input type="checkbox" data-id="${s.id}" ${S.sites.has(s.id) ? 'checked' : ''}><span>${esc(s.name)}</span><span class="n">${s.first}–${s.last}</span></label>`).join('') ||
     '<span class="muted small">No match</span>';
-  $('sites').querySelectorAll('input').forEach(i => i.onchange = () => { i.checked ? S.sites.add(+i.dataset.id) : S.sites.delete(+i.dataset.id); siteSel(); listFuels(); run(); });
+  $('sites').querySelectorAll('input').forEach(i => i.onchange = () => { i.checked ? S.sites.add(+i.dataset.id) : S.sites.delete(+i.dataset.id); siteSel(); listFuels(); paintMap(); run(); });
   siteSel();
 }
 function siteSel() {
@@ -100,6 +104,30 @@ async function groups() {
       if (okF(f) && okC(c) && okM(h)) { add(c, +dt.slice(0, 4), h, v, 1, v, v); rows.push([id, dt, f, c, v]); } }
   }
   return { g, rows };
+}
+// ── map of sample sites ──
+const REC = { 'This year': '#2ecc71', 'Last 60+ days, this year': '#f1c40f', 'Last year': '#e67e22', 'Older': '#8a8f98' };
+let MAP, MARK = {};
+async function initMap() {
+  MAP = L.map('map', { zoomSnap: 0.25, preferCanvas: true }).setView([39, -105], 4);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 14, attribution: '&copy; OpenStreetMap contributors' }).addTo(MAP);
+  const gj = await J('data/sites.geojson');
+  for (const f of gj.features) {
+    const p = f.properties, [lon, lat] = f.geometry.coordinates;
+    const lv = ['dead', 'tree', 'shrub', 'forb', 'grass'].filter(k => p['latest_' + k] !== null).map(k => `${k[0].toUpperCase() + k.slice(1)} ${p['latest_' + k]}%`).join(' · ');
+    const m = L.circleMarker([lat, lon], { radius: 5, weight: 1, color: '#111', fillColor: REC[p.recency] || '#888', fillOpacity: 0.9 })
+      .bindTooltip(`<b>${esc(p.site_name)}</b> (${esc(p.state)})<br>${esc(p.group_name)} · ${esc(p.agency)}<br>Latest sample ${p.latest_sample}${lv ? ': ' + esc(lv) : ''}<br>${p.samples} samples, ${p.first_year}–${p.last_year}`)
+      .on('click', () => { S.sites.has(p.site_id) ? S.sites.delete(p.site_id) : S.sites.add(p.site_id); listSites(); listFuels(); paintMap(); run(); })
+      .addTo(MAP);
+    MARK[p.site_id] = m;
+  }
+  const lg = L.control({ position: 'bottomleft' });
+  lg.onAdd = () => { const d = L.DomUtil.create('div', 'legend'); d.innerHTML = '<b>Latest sample</b><br>' + Object.entries(REC).map(([k, c]) => `<i style="background:${c}"></i>${k}`).join('<br>') + '<br><i style="background:#fff;border:2px solid #7fb3ff"></i>Selected'; return d; };
+  lg.addTo(MAP); paintMap();
+}
+function paintMap() {
+  for (const [id, m] of Object.entries(MARK)) { const on = S.sites.has(+id); m.setStyle({ radius: on ? 9 : 5, weight: on ? 3 : 1, color: on ? '#7fb3ff' : '#111' }); if (on) m.bringToFront(); }
+  if (S.sites.size === 1 && MAP) { const m = MARK[[...S.sites][0]]; if (m && !MAP.getBounds().contains(m.getLatLng())) MAP.setView(m.getLatLng(), 7); }
 }
 let LAST = null;
 async function run() {
@@ -154,9 +182,10 @@ $('pdf').onclick = async () => {
   $('sq').oninput = listSites; $('fq').oninput = listFuels;
   chips($('cats'), IDX.cats.map(c => [c, c]), S.cats, run);
   chips($('mo'), MON.map((m, i) => [i + 1, m]), S.months, run);
-  $('reset').onclick = () => { S.sites.clear(); S.cats.clear(); S.fuels.clear(); S.hy = null; S.months = new Set([...Array(12).keys()].map(m => m + 1));
+  $('reset').onclick = () => { S.sites.clear(); S.cats.clear(); S.fuels.clear(); S.hy = null; S.months = new Set([...Array(12).keys()].map(m => m + 1)); paintMap();
     $('sq').value = $('fq').value = ''; $('cy').selectedIndex = 0; chips($('cats'), IDX.cats.map(c => [c, c]), S.cats, run); chips($('mo'), MON.map((m, i) => [i + 1, m]), S.months, run); listSites(); listFuels(); hyChips(); run(); };
   listSites(); listFuels(); hyChips(); run();
+  initMap().catch(e => { $('map').innerHTML = '<p class="small muted">Site map unavailable.</p>'; console.warn(e); });
 })();
 </script>
 </body>

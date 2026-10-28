@@ -27,14 +27,38 @@ def main():
     df['f'] = df['Fuel Type'].map(fi)
     df['c'] = df['Category'].map(ci)
     (OUT / 'sites').mkdir(parents=True, exist_ok=True)
-    sites = []
+    meta = {}
+    if (ROOT / 'site_metadata.csv').exists():
+        m = pd.read_csv(ROOT / 'site_metadata.csv')
+        meta = {int(r['Site ID']): r for _, r in m.iterrows() if pd.notna(r['Latitude']) and pd.notna(r['Longitude'])}
+    today = pd.Timestamp.now('UTC').tz_localize(None).normalize()
+    sites, feats = [], []
     for sid, g in df.groupby('SiteId'):
         g = g.sort_values('dt')
         rows = [[d.strftime('%Y-%m-%d'), int(f), int(c), round(float(v), 1)] for d, f, c, v in zip(g['dt'], g['f'], g['c'], g['Sample Avg Value'])]
         (OUT / 'sites' / f'{int(sid)}.json').write_text(json.dumps(rows, separators=(',', ':')))
-        sites.append({'id': int(sid), 'name': str(g['Site Name'].dropna().iloc[-1]) if g['Site Name'].notna().any() else str(sid),
-                      'n': len(g), 'fuels': sorted(int(x) for x in g['f'].unique()), 'cats': sorted(int(x) for x in g['c'].unique()),
-                      'first': int(g['y'].min()), 'last': int(g['y'].max())})
+        name = str(g['Site Name'].dropna().iloc[-1]) if g['Site Name'].notna().any() else str(sid)
+        s = {'id': int(sid), 'name': name, 'n': len(g), 'fuels': sorted(int(x) for x in g['f'].unique()),
+             'cats': sorted(int(x) for x in g['c'].unique()), 'first': int(g['y'].min()), 'last': int(g['y'].max())}
+        mm = meta.get(int(sid))
+        if mm is not None:
+            s.update({'lat': round(float(mm['Latitude']), 5), 'lon': round(float(mm['Longitude']), 5)})
+            last = g['dt'].max().normalize()
+            lastday = g[g['dt'].dt.normalize() == last]
+            latest = {c: round(float(v), 1) for c, v in lastday.groupby('Category')['Sample Avg Value'].mean().items()}
+            age = int((today - last).days)
+            props = {'site_id': int(sid), 'site_name': name, 'state': str(mm.get('State', '') or ''), 'area': str(mm.get('Area Name', '') or ''),
+                     'group_name': str(mm.get('Group Name', '') or ''), 'agency': str(mm.get('Agency Landowner', '') or ''),
+                     'status': str(mm.get('Status', '') or ''), 'elevation': None if pd.isna(mm.get('Elevation')) else float(mm['Elevation']),
+                     'samples': len(g), 'first_year': s['first'], 'last_year': s['last'], 'latest_sample': last.strftime('%Y-%m-%d'),
+                     'days_since': age, 'recency': 'This year' if last.year == today.year and age <= 60 else
+                     ('Last 60+ days, this year' if last.year == today.year else ('Last year' if last.year == today.year - 1 else 'Older')),
+                     'fuel_types': ' | '.join(fuels[i] for i in s['fuels']),
+                     **{f'latest_{c.lower()}': latest.get(c) for c in ('Dead', 'Tree', 'Shrub', 'Forb', 'Grass')}}
+            feats.append({'type': 'Feature', 'properties': props,
+                          'geometry': {'type': 'Point', 'coordinates': [s['lon'], s['lat']]}})
+        sites.append(s)
+    (OUT / 'sites.geojson').write_text(json.dumps({'type': 'FeatureCollection', 'features': feats}, separators=(',', ':')))
     agg = df.groupby(['f', 'c', 'y', 'hm'])['Sample Avg Value'].agg(['sum', 'count', 'min', 'max']).reset_index()
     (OUT / 'all.json').write_text(json.dumps([[int(r.f), int(r.c), int(r.y), int(r.hm), round(float(r['sum']), 1), int(r['count']),
                                                round(float(r['min']), 1), round(float(r['max']), 1)] for _, r in agg.iterrows()], separators=(',', ':')))
@@ -43,7 +67,7 @@ def main():
         'first': df['dt'].min().strftime('%Y-%m-%d'), 'last': df['dt'].max().strftime('%Y-%m-%d'),
         'fuels': fuels, 'cats': cats, 'years': sorted(int(y) for y in df['y'].unique()),
         'sites': sorted(sites, key=lambda s: s['name'].lower())}, separators=(',', ':')))
-    print(f'{len(df)} samples, {len(sites)} sites, {len(fuels)} fuel types → {OUT}')
+    print(f'{len(df)} samples, {len(sites)} sites ({len(feats)} with locations), {len(fuels)} fuel types → {OUT}')
 
 
 if __name__ == '__main__':

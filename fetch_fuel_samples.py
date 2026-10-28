@@ -51,3 +51,16 @@ try:
 except Exception as e:
     print("❌ Error fetching or processing data:")
     print(e)
+
+
+# ================================
+# 📍 Site locations (FEMS site metadata, public)
+# ================================
+try:
+    meta_url = "https://fems.fs2c.usda.gov/fuelmodel/siteMetadataDownload/download?"
+    sites = pd.read_csv(meta_url)
+    if len(sites) > 100 and {"Site ID", "Latitude", "Longitude"} <= set(sites.columns):
+        sites.to_csv("site_metadata.csv", index=False)
+        print(f"✅ Site metadata saved ({len(sites)} sites).")
+except Exception as e:
+    print("⚠️ Site metadata not updated (keeping the previous file):", e)
