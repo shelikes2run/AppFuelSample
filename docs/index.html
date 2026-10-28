@@ -287,7 +287,7 @@ $('pdf').onclick = async () => {
     $('sq').value = $('fq').value = ''; $('cy').selectedIndex = 0; chips($('cats'), IDX.cats.map(c => [c, c]), S.cats, run); chips($('mo'), MON.map((m, i) => [i + 1, m]), S.months, run); listSites(); listFuels(); hyChips(); run(); };
   listSites(); listFuels(); hyChips(); run();
   if (EMBED) {   // inside the AGOL app: its map picks the site (?site=), so no page header or Leaflet map
-    document.querySelector('header').style.display = 'none'; $('mapp').style.display = 'none';
+    document.querySelector('header').style.display = 'none'; $('mapp').style.display = 'none'; document.querySelector('aside').style.order = 2;
     J('data/sites.geojson').then(gj => { for (const f of gj.features) SITEPT[f.properties.site_id] = [f.geometry.coordinates[1], f.geometry.coordinates[0], f.properties.site_name]; initContext(); });
   } else initMap().catch(e => { $('map').innerHTML = '<p class="small muted">Site map unavailable.</p>'; console.warn(e); });
 })();
