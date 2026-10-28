@@ -6,7 +6,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: |
-          mkdir -p out; cd out
+          set +e; mkdir -p out; cd out
           B=https://fems.fs2c.usda.gov
           for u in \
             "$B/fuelmodel/site/download?responseFormat=csv&siteId=All" \
@@ -20,7 +20,7 @@ jobs:
             "https://www.wfas.net/nfmd/public/download_site_list.php" \
             "https://www.wfas.net/nfmd/ajax/states_map_site_xml.php?state=CA" ; do
             n=$(echo "$u" | md5sum | cut -c1-6)
-            code=$(curl -s -L -m 60 -o "r_$n.txt" -w "%{http_code} %{content_type} %{size_download}" "$u")
+            code=$(curl -s -L -m 60 -o "r_$n.txt" -w "%{http_code} %{content_type} %{size_download}" "$u" || echo fail)
             echo "$u => $code" >> results.txt
             head -c 800 "r_$n.txt" >> results.txt; echo -e "\n----" >> results.txt
           done
