@@ -68,8 +68,9 @@ const hm2m = i => Math.floor(i / 2) + 1;
 async function J(p) { const r = await fetch(p + '?t=' + Math.floor(Date.now() / 3.6e6)); if (!r.ok) throw new Error(p); return r.json(); }
 function listSites() {
   const q = $('sq').value.toLowerCase();
-  const vis = IDX.sites.filter(s => !q || s.name.toLowerCase().includes(q)).slice(0, 400);
-  $('sites').innerHTML = vis.map(s => `<label><input type="checkbox" data-id="${s.id}" ${S.sites.has(s.id) ? 'checked' : ''}><span>${esc(s.name)}</span><span class="n">${s.first}–${s.last}</span></label>`).join('') ||
+  const pick = IDX.sites.filter(s => S.sites.has(s.id));   // picked sites (map click or list) stay at the top
+  const vis = pick.concat(IDX.sites.filter(s => !S.sites.has(s.id) && (!q || s.name.toLowerCase().includes(q))).slice(0, 400));
+  $('sites').innerHTML = vis.map(s => `<label><input type="checkbox" data-id="${s.id}" ${S.sites.has(s.id) ? 'checked' : ''}><span${S.sites.has(s.id) ? ' style="font-weight:600;color:#7fb3ff"' : ''}>${esc(s.name)}</span><span class="n">${s.first}–${s.last}</span></label>`).join('') ||
     '<span class="muted small">No match</span>';
   $('sites').querySelectorAll('input').forEach(i => i.onchange = () => { i.checked ? S.sites.add(+i.dataset.id) : S.sites.delete(+i.dataset.id); siteSel(); listFuels(); paintMap(); run(); });
   siteSel();
