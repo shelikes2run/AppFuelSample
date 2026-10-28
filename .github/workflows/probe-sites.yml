@@ -8,21 +8,15 @@ jobs:
       - run: |
           set +e; mkdir -p out; cd out
           B=https://fems.fs2c.usda.gov
-          for u in \
-            "$B/fuelmodel/site/download?responseFormat=csv&siteId=All" \
-            "$B/fuelmodel/sites/download?responseFormat=csv" \
-            "$B/fuelmodel/site?returnAll=true&responseFormat=json" \
-            "$B/fuelmodel/sites?returnAll=true" \
-            "$B/api/fuelmodel/sites" \
-            "$B/fuelmodel/site/list" \
-            "$B/fuelmodel/sample/sites" \
-            "$B/api/ext-fuelmodel/sites" \
-            "https://www.wfas.net/nfmd/public/download_site_list.php" \
-            "https://www.wfas.net/nfmd/ajax/states_map_site_xml.php?state=CA" ; do
+          S="$B/fuelmodel/sample/download?returnAll=&siteId=All&sampleId=&startDate=2026-10-01T00:00:00.000Z&endDate=2026-10-05T23:00:00.000Z&filterByFuelId=&filterByStatus=Submitted&filterByCategory=All&filterBySubCategory=All&filterByMethod=All&sortBy=fuel_type&sortOrder=asc"
+          for u in "$S&responseFormat=json" "$S&responseFormat=csv" "$B/fuelmodel/site/download?responseFormat=csv" "$B/fuelmodel/site/download?returnAll=&responseFormat=csv&siteId=All" "$B/fuelmodel/sites/download?returnAll=&responseFormat=json" ; do
             n=$(echo "$u" | md5sum | cut -c1-6)
-            code=$(curl -s -L -m 60 -o "r_$n.txt" -w "%{http_code} %{content_type} %{size_download}" "$u" || echo fail)
-            echo "$u => $code" >> results.txt
-            head -c 800 "r_$n.txt" >> results.txt; echo -e "\n----" >> results.txt
+            code=$(curl -s -L -m 120 -o "r_$n.txt" -w "%{http_code} %{content_type} %{size_download}" "$u" || echo fail)
+            echo "$u => $code" >> results.txt; head -c 1500 "r_$n.txt" >> results.txt; echo -e "\n----" >> results.txt
+          done
+          for g in "$B/api/fuelmodel/graphql" "$B/fuelmodel/graphql" "$B/api/fuelmodel/graphql/" "$B/api/climatology/graphql/"; do
+            code=$(curl -s -m 60 -o g.txt -w "%{http_code}" -H 'Content-Type: application/json' -d '{"query":"{ __schema { queryType { fields { name } } } }"}' "$g" || echo fail)
+            echo "POST $g => $code" >> results.txt; head -c 1500 g.txt >> results.txt; echo -e "\n----" >> results.txt
           done
           git init -q -b probe && git add results.txt && git -c user.name=p -c user.email=p@p commit -qm probe
           git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" probe
