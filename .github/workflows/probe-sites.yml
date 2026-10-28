@@ -1,0 +1,28 @@
+name: probe-sites (temporary)
+on: { workflow_dispatch: {} }
+permissions: { contents: write }
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          mkdir -p out; cd out
+          B=https://fems.fs2c.usda.gov
+          for u in \
+            "$B/fuelmodel/site/download?responseFormat=csv&siteId=All" \
+            "$B/fuelmodel/sites/download?responseFormat=csv" \
+            "$B/fuelmodel/site?returnAll=true&responseFormat=json" \
+            "$B/fuelmodel/sites?returnAll=true" \
+            "$B/api/fuelmodel/sites" \
+            "$B/fuelmodel/site/list" \
+            "$B/fuelmodel/sample/sites" \
+            "$B/api/ext-fuelmodel/sites" \
+            "https://www.wfas.net/nfmd/public/download_site_list.php" \
+            "https://www.wfas.net/nfmd/ajax/states_map_site_xml.php?state=CA" ; do
+            n=$(echo "$u" | md5sum | cut -c1-6)
+            code=$(curl -s -L -m 60 -o "r_$n.txt" -w "%{http_code} %{content_type} %{size_download}" "$u")
+            echo "$u => $code" >> results.txt
+            head -c 800 "r_$n.txt" >> results.txt; echo -e "\n----" >> results.txt
+          done
+          git init -q -b probe && git add results.txt && git -c user.name=p -c user.email=p@p commit -qm probe
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" probe
