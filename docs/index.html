@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Field Sample Comparison</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.27.0/plotly.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root{--bg:#1f2124;--panel:#2a2d31;--panel2:#33373c;--line:#43484e;--text:#e8eaed;--muted:#a5abb2;--acc:#3f7d4a;--link:#8ab4f8}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+a{color:var(--link)}header{background:linear-gradient(180deg,#3f7d4a,#2e5e37);padding:12px 18px}header h1{margin:0;font-size:20px;letter-spacing:.04em;text-transform:uppercase}
+header .sub{font-size:12px;opacity:.85}.wrap{display:grid;grid-template-columns:300px 1fr;gap:14px;padding:14px;max-width:1500px;margin:0 auto}
+@media(max-width:860px){.wrap{grid-template-columns:1fr}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:12px}
+.panel h2{margin:0 0 8px;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+label.f{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:10px 0 4px}
+input[type=search],select{width:100%;background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:6px;padding:5px 7px;font:inherit}
+.list{max-height:190px;overflow:auto;border:1px solid var(--line);border-radius:6px;background:var(--panel2);padding:4px 6px;font-size:13px}
+.list label{display:flex;gap:6px;align-items:flex-start;padding:1px 0;cursor:pointer}.list .n{color:var(--muted);font-size:11px;margin-left:auto}
+.chips{display:flex;flex-wrap:wrap;gap:4px}.chips button{background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:12px;padding:2px 9px;font:inherit;font-size:12px;cursor:pointer}
+.chips button.on{background:#7fb3ff;border-color:#7fb3ff;color:#111}.small{font-size:12px}.muted{color:var(--muted)}
+.btn{background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:6px;padding:5px 10px;font:inherit;font-size:13px;cursor:pointer;margin:2px 4px 2px 0}
+.btn:hover{border-color:#7fb3ff}.chart{height:420px}.sel{font-size:12px;color:var(--muted);margin-top:4px}
+</style>
+</head>
+<body>
+<header><h1>Field Sample Comparison</h1><div class="sub">Fuel moisture field samples (FEMS / NFMD) · current year vs history by half-month · <span id="gen"></span></div></header>
+<div class="wrap">
+  <aside>
+    <div class="panel"><h2>Filters</h2>
+      <label class="f">Sites</label><input type="search" id="sq" placeholder="Search sites…"><div class="list" id="sites"></div>
+      <div class="sel" id="ssel">All sites</div>
+      <label class="f">Categories <span class="muted">(none picked = all)</span></label><div class="chips" id="cats"></div>
+      <label class="f">Fuel types <span class="muted">(none picked = all)</span></label><input type="search" id="fq" placeholder="Search fuel types…"><div class="list" id="fuels"></div><div class="sel" id="fsel">All fuel types</div>
+      <label class="f">Current year</label><select id="cy"></select>
+      <label class="f">Historical years <span class="muted">(default: all others)</span></label><div class="chips" id="hy"></div>
+      <label class="f">Months</label><div class="chips" id="mo"></div>
+      <p class="small"><button class="btn" id="reset">Reset filters</button></p>
+    </div>
+  </aside>
+  <section>
+    <div class="panel"><div id="summary" class="small muted"></div><div id="charts"></div></div>
+    <div class="panel"><h2>Export</h2>
+      <button class="btn" id="csv">⬇ Filtered data (CSV)</button><button class="btn" id="pdf">⬇ All charts (PDF)</button>
+      <span class="small muted">Each chart's camera icon saves it as PNG. With no site selected the CSV holds the half-month summary; pick sites for the individual samples.
+      Full source files: <a href="https://raw.githubusercontent.com/shelikes2run/AppFuelSample/main/field_samples_2005_2014.csv">2005–2014</a> ·
+      <a href="https://raw.githubusercontent.com/shelikes2run/AppFuelSample/main/field_samples_2015_present.csv">2015–present</a>.</span></div>
+  </section>
+</div>
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const HM = i => `2000-${String(Math.floor(i / 2) + 1).padStart(2, '0')}-${i % 2 ? '15' : '01'}`;
+const COLS = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf'];
+const S = { sites: new Set(), cats: new Set(), fuels: new Set(), hy: null, months: new Set([...Array(12).keys()].map(m => m + 1)) };
+let IDX, ALL, siteCache = {};
+const hm2m = i => Math.floor(i / 2) + 1;
+async function J(p) { const r = await fetch(p + '?t=' + Math.floor(Date.now() / 3.6e6)); if (!r.ok) throw new Error(p); return r.json(); }
+function listSites() {
+  const q = $('sq').value.toLowerCase();
+  const vis = IDX.sites.filter(s => !q || s.name.toLowerCase().includes(q)).slice(0, 400);
+  $('sites').innerHTML = vis.map(s => `<label><input type="checkbox" data-id="${s.id}" ${S.sites.has(s.id) ? 'checked' : ''}><span>${esc(s.name)}</span><span class="n">${s.first}–${s.last}</span></label>`).join('') ||
+    '<span class="muted small">No match</span>';
+  $('sites').querySelectorAll('input').forEach(i => i.onchange = () => { i.checked ? S.sites.add(+i.dataset.id) : S.sites.delete(+i.dataset.id); siteSel(); listFuels(); run(); });
+  siteSel();
+}
+function siteSel() {
+  $('ssel').textContent = S.sites.size ? `${S.sites.size} site${S.sites.size > 1 ? 's' : ''}: ` + [...S.sites].map(id => IDX.sites.find(s => s.id === id).name).join(', ') : `All sites (${IDX.sites.length})`;
+}
+function availFuels() {
+  if (!S.sites.size) return IDX.fuels.map((f, i) => i);
+  const u = new Set(); for (const id of S.sites) IDX.sites.find(s => s.id === id).fuels.forEach(f => u.add(f)); return [...u].sort((a, b) => IDX.fuels[a].localeCompare(IDX.fuels[b]));
+}
+function listFuels() {
+  const q = $('fq').value.toLowerCase(), av = availFuels();
+  for (const f of [...S.fuels]) if (!av.includes(f)) S.fuels.delete(f);
+  $('fuels').innerHTML = av.filter(i => !q || IDX.fuels[i].toLowerCase().includes(q)).map(i => `<label><input type="checkbox" data-i="${i}" ${S.fuels.has(i) ? 'checked' : ''}><span>${esc(IDX.fuels[i])}</span></label>`).join('');
+  $('fuels').querySelectorAll('input').forEach(x => x.onchange = () => { x.checked ? S.fuels.add(+x.dataset.i) : S.fuels.delete(+x.dataset.i); $('fsel').textContent = selTxt(); run(); });
+  $('fsel').textContent = selTxt();
+}
+const selTxt = () => S.fuels.size ? [...S.fuels].map(i => IDX.fuels[i]).join(', ') : 'All fuel types';
+function chips(el, items, set, on) {
+  el.innerHTML = items.map(([v, t]) => `<button data-v="${v}" class="${set.has(v) ? 'on' : ''}">${esc(t)}</button>`).join('');
+  el.querySelectorAll('button').forEach(b => b.onclick = () => { const v = isNaN(+b.dataset.v) ? b.dataset.v : +b.dataset.v; set.has(v) ? set.delete(v) : set.add(v); b.classList.toggle('on'); on(); });
+}
+function hyChips() {
+  const cy = +$('cy').value; if (!S.hy) S.hy = new Set(IDX.years.filter(y => y !== cy));
+  chips($('hy'), IDX.years.filter(y => y !== cy).map(y => [y, y]), S.hy, run);
+}
+// half-month groups for the current filters: {cat: {y: {hm: [sum, n, min, max]}}}
+async function groups() {
+  const g = {}, add = (c, y, h, s, n, mn, mx) => { const a = ((g[c] ??= {})[y] ??= {})[h] ??= [0, 0, Infinity, -Infinity]; a[0] += s; a[1] += n; a[2] = Math.min(a[2], mn); a[3] = Math.max(a[3], mx); };
+  const okF = f => !S.fuels.size || S.fuels.has(f), okC = c => !S.cats.size || S.cats.has(IDX.cats[c]), okM = h => S.months.has(hm2m(h));
+  const rows = [];
+  if (!S.sites.size) { for (const [f, c, y, h, s, n, mn, mx] of ALL) if (okF(f) && okC(c) && okM(h)) add(c, y, h, s, n, mn, mx); }
+  else for (const id of S.sites) {
+    const d = siteCache[id] ??= await J(`data/sites/${id}.json`);
+    for (const [dt, f, c, v] of d) { const m = +dt.slice(5, 7), day = +dt.slice(8, 10), h = (m - 1) * 2 + (day >= 15 ? 1 : 0);
+      if (okF(f) && okC(c) && okM(h)) { add(c, +dt.slice(0, 4), h, v, 1, v, v); rows.push([id, dt, f, c, v]); } }
+  }
+  return { g, rows };
+}
+let LAST = null;
+async function run() {
+  const cy = +$('cy').value, hy = [...S.hy].filter(y => y !== cy).sort();
+  const { g, rows } = await groups(); LAST = { g, rows, cy, hy };
+  const cats = Object.keys(g).map(Number).filter(c => g[c][cy]).sort();
+  $('summary').innerHTML = `${S.sites.size ? S.sites.size + ' site(s)' : 'All sites'} · ${selTxt()} · ${S.cats.size ? [...S.cats].join(', ') : 'all categories'} · current ${cy} vs ${hy.length ? (hy.length === 1 ? hy[0] : hy.length + ' historical years') : 'no historical years'}`;
+  if (!cats.length) { $('charts').innerHTML = '<p>No samples match these filters for ' + cy + '.</p>'; return; }
+  $('charts').innerHTML = cats.map(c => `<div id="ch_${c}" class="chart"></div>`).join('');
+  cats.forEach((c, i) => {
+    const cur = g[c][cy], xs = Object.keys(cur).map(Number).sort((a, b) => a - b);
+    const tr = [{ x: xs.map(HM), y: xs.map(h => cur[h][0] / cur[h][1]), name: `${cy} current`, mode: 'lines+markers', line: { color: COLS[i % 10], width: 2.5 },
+      customdata: xs.map(h => cur[h][1]), hovertemplate: '%{x|%b %d}: %{y:.1f} (n=%{customdata})<extra></extra>' }];
+    const H = {}; for (const y of hy) for (const [h, a] of Object.entries((g[c] || {})[y] || {})) { const b = H[h] ??= [0, 0, Infinity, -Infinity]; b[0] += a[0]; b[1] += a[1]; b[2] = Math.min(b[2], a[2]); b[3] = Math.max(b[3], a[3]); }
+    const hx = Object.keys(H).map(Number).sort((a, b) => a - b);
+    if (hy.length === 1) tr.push({ x: hx.map(HM), y: hx.map(h => H[h][0] / H[h][1]), name: String(hy[0]), mode: 'lines+markers', line: { color: '#b07cff', dash: 'dash' }, marker: { symbol: 'square' } });
+    else if (hx.length) tr.push({ x: hx.map(HM), y: hx.map(h => H[h][0] / H[h][1]), name: 'Hist avg', mode: 'lines', line: { color: 'orange', dash: 'dash' } },
+      { x: hx.map(HM), y: hx.map(h => H[h][2]), name: 'Hist min', mode: 'lines', line: { color: '#ff5b5b', dash: 'dot' } },
+      { x: hx.map(HM), y: hx.map(h => H[h][3]), name: 'Hist max', mode: 'lines', line: { color: '#4cd17a', dash: 'dot' } });
+    Plotly.newPlot('ch_' + c, tr, { title: { text: `Category: ${IDX.cats[c]}` }, paper_bgcolor: '#2a2d31', plot_bgcolor: '#2a2d31', font: { color: '#e8eaed' },
+      xaxis: { range: ['2000-01-01', '2000-12-31'], tickformat: '%b', dtick: 'M1', gridcolor: '#3a3f45' }, yaxis: { title: 'Sample avg value (% moisture)', gridcolor: '#3a3f45' },
+      legend: { orientation: 'h', y: -0.15 }, margin: { l: 60, r: 20, t: 45, b: 50 } },
+      { responsive: true, displaylogo: false, toImageButtonOptions: { filename: `${IDX.cats[c]}_plot`, scale: 2 } });
+  });
+}
+function download(name, text, type) { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type })); a.download = name; a.click(); }
+$('csv').onclick = () => {
+  if (!LAST) return; const q = v => /[",\n]/.test(String(v)) ? `"${String(v).replace(/"/g, '""')}"` : v;
+  if (LAST.rows.length) {
+    const nm = id => IDX.sites.find(s => s.id === id).name;
+    download('filtered_samples.csv', ['Site Name,SiteId,Date,Fuel Type,Category,Sample Avg Value', ...LAST.rows.map(([id, d, f, c, v]) => [nm(id), id, d, IDX.fuels[f], IDX.cats[c], v].map(q).join(','))].join('\n'), 'text/csv');
+  } else {
+    const out = ['Category,Year,Half-month,Mean,Samples,Min,Max'];
+    for (const [c, ys] of Object.entries(LAST.g)) for (const [y, hs] of Object.entries(ys)) for (const [h, a] of Object.entries(hs))
+      out.push([IDX.cats[c], y, `${MON[Math.floor(h / 2)]} ${h % 2 ? 15 : 1}`, (a[0] / a[1]).toFixed(1), a[1], a[2], a[3]].map(q).join(','));
+    download('filtered_samples_summary.csv', out.join('\n'), 'text/csv');
+  }
+};
+$('pdf').onclick = async () => {
+  const { jsPDF } = window.jspdf, doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'letter' });
+  const els = [...document.querySelectorAll('#charts .chart')];
+  for (let i = 0; i < els.length; i++) { const img = await Plotly.toImage(els[i], { format: 'png', width: 1100, height: 520 }); if (i) doc.addPage(); doc.addImage(img, 'PNG', 20, 30, 750, 355); }
+  doc.save('field_sample_charts.pdf');
+};
+(async function () {
+  [IDX, ALL] = await Promise.all([J('data/index.json'), J('data/all.json')]);
+  $('gen').textContent = `${IDX.samples.toLocaleString()} samples, ${IDX.first} to ${IDX.last} · updated ${IDX.generated}`;
+  const P = new URLSearchParams(location.search);
+  (P.get('site') || '').split(',').filter(Boolean).forEach(x => { const s = IDX.sites.find(s => String(s.id) === x || s.name.toLowerCase() === x.toLowerCase()); if (s) S.sites.add(s.id); });
+  $('cy').innerHTML = IDX.years.slice().reverse().map(y => `<option>${y}</option>`).join('');
+  $('cy').onchange = () => { S.hy = null; hyChips(); run(); };
+  $('sq').oninput = listSites; $('fq').oninput = listFuels;
+  chips($('cats'), IDX.cats.map(c => [c, c]), S.cats, run);
+  chips($('mo'), MON.map((m, i) => [i + 1, m]), S.months, run);
+  $('reset').onclick = () => { S.sites.clear(); S.cats.clear(); S.fuels.clear(); S.hy = null; S.months = new Set([...Array(12).keys()].map(m => m + 1));
+    $('sq').value = $('fq').value = ''; $('cy').selectedIndex = 0; chips($('cats'), IDX.cats.map(c => [c, c]), S.cats, run); chips($('mo'), MON.map((m, i) => [i + 1, m]), S.months, run); listSites(); listFuels(); hyChips(); run(); };
+  listSites(); listFuels(); hyChips(); run();
+})();
+</script>
+</body>
+</html>

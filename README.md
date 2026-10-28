@@ -24,3 +24,10 @@ streamlit run app.py
 1. https://appfuelsample-gvoxhxzzyefqcr2atsuqyc.streamlit.app/
 
 Enjoy!
+
+## Web page and ArcGIS Online app (replaces the Streamlit app)
+
+`docs/index.html` is the same dashboard as a static page, published with GitHub Pages
+(https://shelikes2run.github.io/AppFuelSample/) and embedded in the NIFC ArcGIS Online
+Experience Builder app **Field Sample Comparison**. The daily workflow fetches the FEMS samples and
+then runs `build_web.py`, which writes the page's data to `docs/data/` (no keys needed).
