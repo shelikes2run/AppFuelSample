@@ -22,7 +22,7 @@ input[type=search],select{width:100%;background:var(--panel2);color:var(--text);
 .chips{display:flex;flex-wrap:wrap;gap:4px}.chips button{background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:12px;padding:2px 9px;font:inherit;font-size:12px;cursor:pointer}
 .chips button.on{background:#7fb3ff;border-color:#7fb3ff;color:#111}.small{font-size:12px}.muted{color:var(--muted)}
 .btn{background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:6px;padding:5px 10px;font:inherit;font-size:13px;cursor:pointer;margin:2px 4px 2px 0}
-.btn:hover{border-color:#7fb3ff}#map{height:430px;border-radius:8px}.legend{background:rgba(31,33,36,.92);color:#e8eaed;padding:6px 9px;border-radius:6px;font-size:12px;line-height:1.6}.legend i{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:6px;vertical-align:middle}.chart{height:420px}.near{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;margin-top:8px}.cam{background:#15171a;border:1px solid #2c3036;border-radius:8px;overflow:hidden;font-size:12px}.cam img{width:100%;aspect-ratio:16/9;object-fit:cover;display:block;background:#000}.cam div{padding:6px 8px;line-height:1.4}.pop img{width:260px;max-width:100%;display:block;border-radius:4px;margin:4px 0}.dr{display:inline-block;padding:1px 7px;border-radius:9px;color:#111;font-weight:600}.drt{border-collapse:collapse;font-size:12px}.drt td{padding:1px 6px;border-bottom:1px solid #333}.sel{font-size:12px;color:var(--muted);margin-top:4px}
+.btn:hover{border-color:#7fb3ff}#map{height:430px;border-radius:8px}.legend{background:rgba(31,33,36,.92);color:#e8eaed;padding:6px 9px;border-radius:6px;font-size:12px;line-height:1.6}.legend i{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:6px;vertical-align:middle}.chart{height:420px}.near{display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:8px;margin-top:6px}.cam{background:#15171a;border:1px solid #2c3036;border-radius:8px;overflow:hidden;font-size:12px}.cam img{width:100%;aspect-ratio:16/9;object-fit:cover;display:block;background:#000}.cam div{padding:5px 7px;line-height:1.35;font-size:11.5px}.cam b{font-size:12px}.cam{transition:border-color .15s}.cam:hover{border-color:#7fb3ff}.ctx{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;align-items:start;margin:6px 0 4px}.ctx .k{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.05em;padding-top:3px}.drh{border-collapse:collapse;font-size:11.5px}.drh th{font-weight:500;color:var(--muted);padding:0 4px 3px;text-align:center;white-space:nowrap}.drh td{padding:1px 3px;text-align:center}.drh td:first-child{text-align:left;color:var(--muted);padding-right:6px}.dr.sm{padding:0 6px;font-size:11px;min-width:38px}.sec{margin-top:12px;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}details.src{margin-top:10px;font-size:11.5px;color:var(--muted)}details.src summary{cursor:pointer}body.embed .wrap{padding:8px;gap:8px}body.embed .panel{padding:10px 12px;margin-bottom:8px}body.embed .chart{height:360px}.pop img{width:260px;max-width:100%;display:block;border-radius:4px;margin:4px 0}.dr{display:inline-block;padding:1px 7px;border-radius:9px;color:#111;font-weight:600}.drt{border-collapse:collapse;font-size:12px}.drt td{padding:1px 6px;border-bottom:1px solid #333}.sel{font-size:12px;color:var(--muted);margin-top:4px}
 </style>
 </head>
 <body>
@@ -44,10 +44,10 @@ input[type=search],select{width:100%;background:var(--panel2);color:var(--text);
     <div class="panel" id="mapp"><h2>Sample sites</h2><div id="map"></div>
       <p class="small muted" style="margin:6px 0 0">Every site with field samples, colored by its latest sample. Click a site to add it to (or remove it from) the charts; hover for its latest values. Use the layer button (top right) for cameras and drought.</p></div>
     <div class="panel" id="nearp"><h2>Current vegetation &amp; drought near the selected site</h2><div id="near" class="small muted">Click a site on the map (or pick one in the list) to see the nearest live cameras and drought conditions there.</div>
-      <p class="small muted" style="margin:8px 0 0">Cameras: <a href="https://alertcalifornia.org" target="_blank" rel="noopener">ALERTCalifornia</a> (UC San Diego; latest frame, refreshed every few minutes, CA) and the
+      <details class="src"><summary>About the cameras &amp; drought data</summary>Cameras: <a href="https://alertcalifornia.org" target="_blank" rel="noopener">ALERTCalifornia</a> (UC San Diego; latest frame, refreshed every few minutes, CA) and the
       <a href="https://phenocam.nau.edu" target="_blank" rel="noopener">PhenoCam Network</a> (vegetation-monitoring cameras across the U.S.; latest daily image).
       Drought: <a href="https://droughtmonitor.unl.edu" target="_blank" rel="noopener">U.S. Drought Monitor</a> (current week) and, in California, the UC Irvine CHRS
-      <a href="https://drought.eng.uci.edu" target="_blank" rel="noopener">drought forecast</a> by river basin (MSDI = precipitation + soil moisture; SPI = precipitation only), the same layer as the CA Prescribed Fire Planner.</p></div>
+      <a href="https://drought.eng.uci.edu" target="_blank" rel="noopener">drought forecast</a> by river basin (MSDI = precipitation + soil moisture; SPI = precipitation only), the same layer as the CA Prescribed Fire Planner.</details></div>
     <div class="panel"><div id="summary" class="small muted"></div><div id="charts"></div></div>
     <div class="panel"><h2>Export</h2>
       <button class="btn" id="csv">⬇ Filtered data (CSV)</button><button class="btn" id="pdf">⬇ All charts (PDF)</button>
@@ -150,7 +150,7 @@ function inGeom(pt, g) { const polys = g.type === 'Polygon' ? [g.coordinates] : 
 const msdiCat = v => v == null ? null : v <= -2 ? 4 : v <= -1.6 ? 3 : v <= -1.3 ? 2 : v <= -0.8 ? 1 : v <= -0.5 ? 0 : v >= 0.5 ? 'wet' : 'near';
 const msdiCol = v => { const c = msdiCat(v); return c === null ? '#888' : c === 'wet' ? (v >= 1.3 ? '#2166ac' : v >= 0.8 ? '#67a9cf' : '#d1e5f0') : c === 'near' ? '#ffffff' : DCOL[c]; };
 const msdiTxt = v => { const c = msdiCat(v); return c === null ? 'n/a' : c === 'wet' ? 'Wetter than normal' : c === 'near' ? 'Near normal' : ['D0 Abnormally dry', 'D1 Moderate', 'D2 Severe', 'D3 Extreme', 'D4 Exceptional'][c]; };
-const chip = (col, t) => `<span class="dr" style="background:${col}">${esc(t)}</span>`;
+const chip = (col, t) => `<span class="dr" style="background:${col};color:${['#e60000', '#730000', '#2166ac', '#67a9cf'].includes(col) ? '#fff' : '#111'}">${esc(t)}</span>`;
 function alertPop(p, lat, lon) {
   return `<div class="pop"><b>${esc(p.name)}</b> <span class="muted">(${esc(p.county)} Co.)</span><a href="${AC}${p.id}/latest-frame.jpg" target="_blank" rel="noopener"><img loading="lazy" src="${AC}${p.id}/latest-thumb.jpg" alt="Latest frame"></a>
     Facing ${CMP(p.az_current)} (${Math.round(p.az_current)}°), ${Math.round(p.fov)}° view · frame ${ago(p.last_frame_ts)}<br>
@@ -161,15 +161,17 @@ function phenoPop(c) {
     ${esc(c.veg || 'Vegetation n/a')}${c.species ? ' · ' + esc(c.species) : ''}<br>Latest image ${esc(c.last)}${c.elev ? ` · ${c.elev} m` : ''}<br>
     <a href="${PC}/webcam/sites/${c.site}/" target="_blank" rel="noopener">Site page &amp; image archive</a></div>`;
 }
-function outlookRows(p) {
-  const ks = ['obs_msdi3', 'msdi3_m1', 'msdi3_m2', 'msdi3_m3', 'msdi6_m3', 'msdi6_m6', 'msdi12_m6', 'msdi12_m12'];
-  return '<table class="drt"><tr><td></td><td><b>MSDI</b></td><td><b>SPI</b></td></tr>' + ks.map(k => { const s = k.replace('msdi', 'spi'), n = k.match(/msdi(\d+)/)[1];
-    return `<tr><td>${k.startsWith('obs') ? 'Observed' : 'Forecast'} ${n}-mo, ${esc(p[k + '_lbl'])}</td><td>${chip(msdiCol(p[k]), (p[k] ?? '–') + '')}</td><td>${chip(msdiCol(p[s]), (p[s] ?? '–') + '')}</td></tr>`; }).join('') + '</table>';
+function outlookRows(p) {   // compact: columns = months, rows = MSDI / SPI
+  const cols = [['obs_msdi3', 'Obs'], ['msdi3_m1', '3-mo'], ['msdi3_m2', '3-mo'], ['msdi3_m3', '3-mo'], ['msdi6_m6', '6-mo'], ['msdi12_m12', '12-mo']];
+  const hd = cols.map(([k, t]) => `<th>${esc((p[k + '_lbl'] || '').replace(/ 20(\d\d)$/, " '$1"))}<br><span style="font-size:10px">${t}</span></th>`).join('');
+  const row = (nm, f) => `<tr><td>${nm}</td>${cols.map(([k]) => { const v = p[f(k)]; return `<td>${chip(msdiCol(v), v ?? '–').replace('class="dr"', 'class="dr sm"')}</td>`; }).join('')}</tr>`;
+  return `<table class="drh"><tr><th></th>${hd}</tr>${row('MSDI', k => k)}${row('SPI', k => k.replace('msdi', 'spi'))}</table>`;
 }
 async function initContext() {
-  let rC, rD, gAlert, gPheno, gUsdm, gOut;
+  const ic = u => L.icon({ iconUrl: u, iconSize: [18, 15], iconAnchor: [9, 8], popupAnchor: [0, -6], tooltipAnchor: [8, 0] });
+  let ICA, ICP, rC, rD, gAlert, gPheno, gUsdm, gOut;
   if (MAP) {
-  rC = L.canvas({ padding: 0.3 });
+  rC = L.canvas({ padding: 0.3 }); ICA = ic('assets/cam_alert.png'); ICP = ic('assets/cam_pheno.png');
   MAP.createPane('drought'); MAP.getPane('drought').style.zIndex = 350;
   rD = L.canvas({ pane: 'drought' });
   gAlert = L.layerGroup(), gPheno = L.layerGroup(), gUsdm = L.layerGroup(), gOut = L.layerGroup();
@@ -179,10 +181,10 @@ async function initContext() {
   }
   const jobs = [
     fetch(AC + 'all_cameras-v3.json').then(r => r.json()).then(d => { for (const f of d.features) { const p = f.properties, [lon, lat] = f.geometry.coordinates;
-      CTX.alert.push({ p, lat, lon }); MAP && L.circleMarker([lat, lon], { renderer: rC, radius: 3.5, weight: 1, color: '#003b46', fillColor: '#00d0ff', fillOpacity: 0.9 })
+      CTX.alert.push({ p, lat, lon }); MAP && L.marker([lat, lon], { icon: ICA, keyboard: false })
         .bindTooltip(`📷 ${esc(p.name)}`).bindPopup(() => alertPop(p, lat, lon), { maxWidth: 290 }).addTo(gAlert); } }),
     J('data/phenocams.json').then(d => { for (const c of d.cameras) { CTX.pheno.push(c);
-      MAP && L.circleMarker([c.lat, c.lon], { renderer: rC, radius: 4.5, weight: 1, color: '#2b0050', fillColor: '#c48bff', fillOpacity: 0.95 })
+      MAP && L.marker([c.lat, c.lon], { icon: ICP, keyboard: false })
         .bindTooltip(`🌿 ${esc(c.site)} (${esc(c.veg)})`).bindPopup(() => phenoPop(c), { maxWidth: 290 }).addTo(gPheno); } }),
     J('data/usdm.geojson').then(d => { CTX.usdm = d;
       MAP && L.geoJSON(d, { pane: 'drought', renderer: rD, style: f => ({ weight: 0, fillColor: DCOL[f.properties.dm], fillOpacity: 0.45 }) })
@@ -193,7 +195,7 @@ async function initContext() {
         .bindPopup(l => '<b>Drought forecast for this basin</b><br>' + outlookRows(l.feature.properties)).addTo(gOut); }),
   ];
   if (MAP) { const leg = L.control({ position: 'bottomright' });
-  leg.onAdd = () => { const d = L.DomUtil.create('div', 'legend'); d.innerHTML = '<i style="background:#00d0ff"></i>ALERTCalifornia camera<br><i style="background:#c48bff"></i>PhenoCam<br><b>Drought</b> ' +
+  leg.onAdd = () => { const d = L.DomUtil.create('div', 'legend'); d.innerHTML = '<img src="assets/cam_alert.png" width="16" style="vertical-align:middle;margin-right:5px">ALERTCalifornia camera<br><img src="assets/cam_pheno.png" width="16" style="vertical-align:middle;margin-right:5px">PhenoCam<br><b>Drought</b> ' +
     DCOL.map((c, i) => `<i style="background:${c};border-radius:2px;margin:0 1px 0 4px"></i>D${i}`).join(''); return d; };
   leg.addTo(MAP); }
   await Promise.allSettled(jobs).then(r => r.forEach(x => x.status === 'rejected' && console.warn('context layer', x.reason)));
@@ -211,19 +213,23 @@ function paintNear() {
   for (const { p, lat: a, lon: b } of CTX.alert) { const d = km(here, [a, b]); if (d > R) continue;
     const brg = bearing([a, b], here), off = Math.abs(((brg - p.az_current + 540) % 360) - 180), facing = d < 1 || off <= p.fov / 2 + 5;
     cams.push({ d, facing, html: `<div class="cam"><a href="${AC}${p.id}/latest-frame.jpg" target="_blank" rel="noopener"><img loading="lazy" src="${AC}${p.id}/latest-thumb.jpg" alt=""></a><div><b>${esc(p.name)}</b> · ${d.toFixed(1)} km ${CMP(bearing(here, [a, b]))}<br>
-      ${facing ? '<span style="color:#4cd17a">● Looking toward the site</span>' : `Facing ${CMP(p.az_current)}, site is ${CMP(brg)} of camera`}<br><span class="muted">ALERTCalifornia · ${ago(p.last_frame_ts)}</span></div></div>` }); }
+      ${facing ? '<span style="color:#4cd17a">● Looking toward site</span>' : `<span class="muted">Facing ${CMP(p.az_current)}</span>`} · <span class="muted">${ago(p.last_frame_ts)}</span></div></div>` }); }
   for (const c of CTX.pheno) { const d = km(here, [c.lat, c.lon]); if (d > R) continue;
-    cams.push({ d, facing: true, html: `<div class="cam"><a href="${PC}/webcam/sites/${c.site}/" target="_blank" rel="noopener"><img loading="lazy" src="${PC}/data/latest/thumbs/${c.site}.thumb.jpg" alt=""></a><div><b>${esc(c.site)}</b> · ${d.toFixed(1)} km ${CMP(bearing(here, [c.lat, c.lon]))}<br>${esc(c.veg)}<br><span class="muted">PhenoCam · ${esc(c.last)}</span></div></div>` }); }
+    cams.push({ d, facing: true, html: `<div class="cam"><a href="${PC}/webcam/sites/${c.site}/" target="_blank" rel="noopener"><img loading="lazy" src="${PC}/data/latest/thumbs/${c.site}.thumb.jpg" alt=""></a><div><b>${esc(c.site)}</b> · ${d.toFixed(1)} km ${CMP(bearing(here, [c.lat, c.lon]))}<br>${esc(c.veg)} · <span class="muted">PhenoCam, ${esc(c.last.slice(5))}</span></div></div>` }); }
   cams.sort((a, b) => (b.facing - a.facing) || a.d - b.d);
-  let dr = '';
   const u = CTX.usdm && CTX.usdm.features.filter(f => inGeom(pt, f.geometry)).reduce((m, f) => Math.max(m, f.properties.dm), -1);
-  if (CTX.usdm) dr += `<p>U.S. Drought Monitor (${esc(CTX.usdm.metadata.valid || 'current')}): ${u >= 0 ? chip(DCOL[u], CTX.usdm.features.find(f => f.properties.dm === u).properties.label) : chip('#e8eaed', 'None')}</p>`;
   const b = CTX.outlook && CTX.outlook.features.find(f => inGeom(pt, f.geometry));
-  if (b) dr += `<p>CA drought forecast for this river basin:</p>${outlookRows(b.properties)}`;
+  let dr = '';
+  if (CTX.usdm) dr += `<div class="k">Drought now</div><div>${u >= 0 ? chip(DCOL[u], CTX.usdm.features.find(f => f.properties.dm === u).properties.label) : chip('#e8eaed', 'None')} <span class="muted">U.S. Drought Monitor, ${esc(CTX.usdm.metadata.valid || 'current week')}</span></div>`;
+  if (b) dr += `<div class="k">Basin forecast</div><div>${outlookRows(b.properties)}<div class="muted" style="font-size:10.5px;margin-top:2px">≤ -0.5 dry (D0) … ≤ -2 exceptional (D4); ≥ 0.5 wetter than normal</div></div>`;
+  const N = 6, more = cams.length > N;
   el.classList.remove('muted');
-  el.innerHTML = `<b>${esc(name)}</b>${ids.length > 1 ? ' <span class="muted">(the most recently picked site)</span>' : ''}${dr}
-    <p style="margin-top:10px">${cams.length ? `${cams.length} camera${cams.length > 1 ? 's' : ''} within ${R} km${cams.length > 9 ? ', nearest 9 shown' : ''}. Click an image for the full-size frame.` : `No live cameras within ${R} km. Turn on the camera layers on the map to look farther out.`}</p>
-    <div class="near">${cams.slice(0, 9).map(c => c.html).join('')}</div>`;
+  el.innerHTML = `<div style="font-size:15px;font-weight:600">${esc(name)}${ids.length > 1 ? ' <span class="muted" style="font-size:12px;font-weight:400">(most recently picked site)</span>' : ''}</div>
+    <div class="ctx">${dr}</div>
+    <div class="sec">Live cameras within ${R} km ${cams.length ? `<span style="text-transform:none;letter-spacing:0">· ${cams.length} found${cams.some(c => c.facing && c.html.includes('Looking toward')) ? ', ones looking toward the site first' : ''}</span>` : ''}</div>
+    ${cams.length ? `<div class="near" id="camgrid">${cams.slice(0, N).map(c => c.html).join('')}</div>${more ? `<button class="btn" id="cammore" style="margin-top:6px">Show all ${cams.length} cameras</button>` : ''}`
+      : '<p class="muted" style="margin:4px 0">None nearby. Turn on the camera layers on the map to look farther out.</p>'}`;
+  if (more) $('cammore').onclick = () => { $('camgrid').innerHTML = cams.map(c => c.html).join(''); $('cammore').remove(); };
 }
 function paintMap() {
   paintNear();
@@ -248,9 +254,9 @@ async function run() {
     else if (hx.length) tr.push({ x: hx.map(HM), y: hx.map(h => H[h][0] / H[h][1]), name: 'Hist avg', mode: 'lines', line: { color: 'orange', dash: 'dash' } },
       { x: hx.map(HM), y: hx.map(h => H[h][2]), name: 'Hist min', mode: 'lines', line: { color: '#ff5b5b', dash: 'dot' } },
       { x: hx.map(HM), y: hx.map(h => H[h][3]), name: 'Hist max', mode: 'lines', line: { color: '#4cd17a', dash: 'dot' } });
-    Plotly.newPlot('ch_' + c, tr, { title: { text: `Category: ${IDX.cats[c]}` }, paper_bgcolor: '#2a2d31', plot_bgcolor: '#2a2d31', font: { color: '#e8eaed' },
-      xaxis: { range: ['2000-01-01', '2000-12-31'], tickformat: '%b', dtick: 'M1', gridcolor: '#3a3f45' }, yaxis: { title: 'Sample avg value (% moisture)', gridcolor: '#3a3f45' },
-      legend: { orientation: 'h', y: -0.15 }, margin: { l: 60, r: 20, t: 45, b: 50 } },
+    Plotly.newPlot('ch_' + c, tr, { title: { text: IDX.cats[c], x: 0.01, xanchor: 'left', font: { size: 15 } }, paper_bgcolor: '#2a2d31', plot_bgcolor: '#2a2d31', font: { color: '#e8eaed', size: EMBED ? 11 : 12 },
+      xaxis: { range: ['2000-01-01', '2000-12-31'], tickformat: '%b', dtick: 'M1', gridcolor: '#3a3f45' }, yaxis: { title: { text: '% moisture', standoff: 4 }, gridcolor: '#3a3f45', automargin: true },
+      legend: { orientation: 'h', x: 1, xanchor: 'right', y: 1.02, yanchor: 'bottom', bgcolor: 'rgba(0,0,0,0)' }, margin: { l: 50, r: 12, t: 40, b: 30 }, hovermode: 'x unified' },
       { responsive: true, displaylogo: false, toImageButtonOptions: { filename: `${IDX.cats[c]}_plot`, scale: 2 } });
   });
 }
@@ -287,7 +293,7 @@ $('pdf').onclick = async () => {
     $('sq').value = $('fq').value = ''; $('cy').selectedIndex = 0; chips($('cats'), IDX.cats.map(c => [c, c]), S.cats, run); chips($('mo'), MON.map((m, i) => [i + 1, m]), S.months, run); listSites(); listFuels(); hyChips(); run(); };
   listSites(); listFuels(); hyChips(); run();
   if (EMBED) {   // inside the AGOL app: its map picks the site (?site=), so no page header or Leaflet map
-    document.querySelector('header').style.display = 'none'; $('mapp').style.display = 'none'; document.querySelector('aside').style.order = 2;
+    document.querySelector('header').style.display = 'none'; $('mapp').style.display = 'none'; document.querySelector('aside').style.order = 2; document.body.classList.add('embed');
     J('data/sites.geojson').then(gj => { for (const f of gj.features) SITEPT[f.properties.site_id] = [f.geometry.coordinates[1], f.geometry.coordinates[0], f.properties.site_name]; initContext(); });
   } else initMap().catch(e => { $('map').innerHTML = '<p class="small muted">Site map unavailable.</p>'; console.warn(e); });
 })();
