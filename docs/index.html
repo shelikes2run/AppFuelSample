@@ -284,7 +284,8 @@ $('pdf').onclick = async () => {
   [IDX, ALL] = await Promise.all([J('data/index.json'), J('data/all.json')]);
   $('gen').textContent = `${IDX.samples.toLocaleString()} samples, ${IDX.first} to ${IDX.last} · updated ${IDX.generated}`;
   const P = new URLSearchParams(location.search);
-  (P.get('site') || '').split(',').filter(Boolean).forEach(x => { const s = IDX.sites.find(s => String(s.id) === x || s.name.toLowerCase() === x.toLowerCase()); if (s) S.sites.add(s.id); });
+  (P.get('site') || '').replace(/(\d)[,\s](?=\d{3}(\D|$))/g, '$1').split(',')   // the AGOL app writes 1057 as "1,057"
+  .filter(Boolean).forEach(x => { const s = IDX.sites.find(s => String(s.id) === x || s.name.toLowerCase() === x.toLowerCase()); if (s) S.sites.add(s.id); });
   $('cy').innerHTML = IDX.years.slice().reverse().map(y => `<option>${y}</option>`).join('');
   $('cy').onchange = () => { S.hy = null; hyChips(); run(); };
   $('sq').oninput = listSites; $('fq').oninput = listFuels;
