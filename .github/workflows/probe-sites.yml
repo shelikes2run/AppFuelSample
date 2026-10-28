@@ -5,18 +5,32 @@ jobs:
   probe:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - run: pip install -q requests pandas
+      - shell: python
+        run: |
+          import requests, json
+          B = 'https://fems.fs2c.usda.gov'
+          S = (B + '/fuelmodel/sample/download?returnAll=&siteId=All&sampleId=&startDate=2026-10-01T00:00:00.000Z&endDate=2026-10-05T23:00:00.000Z'
+               '&filterByFuelId=&filterByStatus=Submitted&filterByCategory=All&filterBySubCategory=All&filterByMethod=All&sortBy=fuel_type&sortOrder=asc')
+          urls = [S + '&responseFormat=json', S + '&responseFormat=csv', B + '/fuelmodel/site/download?responseFormat=csv',
+                  B + '/fuelmodel/site/download?returnAll=&responseFormat=csv&siteId=All', B + '/fuelmodel/sites/download?returnAll=&responseFormat=json',
+                  B + '/fuelmodel/site?returnAll=true', B + '/fuelmodel/sites', B + '/fuelmodel/site/list', B + '/fuelmodel/sites/list?returnAll=true']
+          out = []
+          for u in urls:
+              try:
+                  r = requests.get(u, timeout=120)
+                  out.append(f'{u} => {r.status_code} {r.headers.get("content-type")} {len(r.content)}\n{r.text[:1500]}')
+              except Exception as e:
+                  out.append(f'{u} => ERR {e}')
+          for g in [B + '/api/fuelmodel/graphql', B + '/fuelmodel/graphql', B + '/api/climatology/graphql/', B + '/api/ext-fuelmodel/graphql']:
+              try:
+                  r = requests.post(g, json={'query': '{ __schema { queryType { fields { name } } } }'}, timeout=60)
+                  out.append(f'POST {g} => {r.status_code}\n{r.text[:2000]}')
+              except Exception as e:
+                  out.append(f'POST {g} => ERR {e}')
+          open('results.txt', 'w').write('\n----\n'.join(out))
       - run: |
-          set +e; mkdir -p out; cd out
-          B=https://fems.fs2c.usda.gov
-          S="$B/fuelmodel/sample/download?returnAll=&siteId=All&sampleId=&startDate=2026-10-01T00:00:00.000Z&endDate=2026-10-05T23:00:00.000Z&filterByFuelId=&filterByStatus=Submitted&filterByCategory=All&filterBySubCategory=All&filterByMethod=All&sortBy=fuel_type&sortOrder=asc"
-          for u in "$S&responseFormat=json" "$S&responseFormat=csv" "$B/fuelmodel/site/download?responseFormat=csv" "$B/fuelmodel/site/download?returnAll=&responseFormat=csv&siteId=All" "$B/fuelmodel/sites/download?returnAll=&responseFormat=json" ; do
-            n=$(echo "$u" | md5sum | cut -c1-6)
-            code=$(curl -s -L -m 120 -o "r_$n.txt" -w "%{http_code} %{content_type} %{size_download}" "$u" || echo fail)
-            echo "$u => $code" >> results.txt; head -c 1500 "r_$n.txt" >> results.txt; echo -e "\n----" >> results.txt
-          done
-          for g in "$B/api/fuelmodel/graphql" "$B/fuelmodel/graphql" "$B/api/fuelmodel/graphql/" "$B/api/climatology/graphql/"; do
-            code=$(curl -s -m 60 -o g.txt -w "%{http_code}" -H 'Content-Type: application/json' -d '{"query":"{ __schema { queryType { fields { name } } } }"}' "$g" || echo fail)
-            echo "POST $g => $code" >> results.txt; head -c 1500 g.txt >> results.txt; echo -e "\n----" >> results.txt
-          done
           git init -q -b probe && git add results.txt && git -c user.name=p -c user.email=p@p commit -qm probe
           git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" probe
