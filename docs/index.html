@@ -227,7 +227,7 @@ async function initContext() {
   gAlert = L.layerGroup(), gPheno = L.layerGroup(), gUsdm = L.layerGroup(), gOut = L.layerGroup();
   L.control.layers(null, { 'ALERTCalifornia cameras': gAlert, 'PhenoCam vegetation cameras': gPheno,
     'U.S. Drought Monitor (current)': gUsdm, 'CA drought outlook, MSDI next month': gOut }, { collapsed: true, position: 'topright' }).addTo(MAP);
-  gAlert.addTo(MAP); gPheno.addTo(MAP);
+  if (!EMBED) { gAlert.addTo(MAP); gPheno.addTo(MAP); }   // in the AGOL app's small compare map, cameras start off
   }
   const jobs = [
     fetch(AC + 'all_cameras-v3.json').then(r => r.json()).then(d => { for (const f of d.features) { const p = f.properties, [lon, lat] = f.geometry.coordinates;
@@ -244,7 +244,7 @@ async function initContext() {
         .bindTooltip(l => `MSDI ${esc(l.feature.properties.msdi3_m1_lbl)}: ${l.feature.properties.msdi3_m1} (${msdiTxt(l.feature.properties.msdi3_m1)})`, { sticky: true })
         .bindPopup(l => '<b>Drought forecast for this basin</b><br>' + outlookRows(l.feature.properties)).addTo(gOut); }),
   ];
-  if (MAP) { const leg = L.control({ position: 'bottomright' });
+  if (MAP && !EMBED) { const leg = L.control({ position: 'bottomright' });
   leg.onAdd = () => { const d = L.DomUtil.create('div', 'legend'); d.innerHTML = '<img src="assets/cam_alert.png" width="16" style="vertical-align:middle;margin-right:5px">ALERTCalifornia camera<br><img src="assets/cam_pheno.png" width="16" style="vertical-align:middle;margin-right:5px">PhenoCam<br><b>Drought</b> ' +
     DCOL.map((c, i) => `<i style="background:${c};border-radius:2px;margin:0 1px 0 4px"></i>D${i}`).join(''); return d; };
   leg.addTo(MAP); }
