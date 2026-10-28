@@ -114,7 +114,7 @@ async function groups() {
 const REC = { 'This year': '#2ecc71', 'Last 60+ days, this year': '#f1c40f', 'Last year': '#e67e22', 'Older': '#8a8f98' };
 let MAP, MARK = {};
 async function initMap() {
-  MAP = L.map('map', { zoomSnap: 0.25, preferCanvas: true }).setView([39, -105], 4);
+  MAP = L.map('map', { zoomSnap: 0.25, preferCanvas: true }).setView([37.4, -119.4], 6);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 14, attribution: '&copy; OpenStreetMap contributors' }).addTo(MAP);
   const gj = await J('data/sites.geojson');
   for (const f of gj.features) {
