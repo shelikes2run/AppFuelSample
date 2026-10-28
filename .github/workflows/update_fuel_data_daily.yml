@@ -21,13 +21,16 @@ jobs:
       - name: 📦 Install Dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pandas
+          pip install pandas shapely
 
       - name: 🚀 Run fetch script
         run: python fetch_fuel_samples.py
 
       - name: 🌐 Build the web page data (docs/data)
         run: python build_web.py
+
+      - name: 📷 Cameras & drought layers (PhenoCam, U.S. Drought Monitor)
+        run: python build_context.py
 
       - name: 📤 Commit and Push CSV (if changed)
         run: |

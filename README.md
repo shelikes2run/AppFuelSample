@@ -31,3 +31,13 @@ Enjoy!
 (https://shelikes2run.github.io/AppFuelSample/) and embedded in the NIFC ArcGIS Online
 Experience Builder app **Field Sample Comparison**. The daily workflow fetches the FEMS samples and
 then runs `build_web.py`, which writes the page's data to `docs/data/` (no keys needed).
+
+## Cameras and drought on the map
+
+The site map also shows current conditions:
+- **ALERTCalifornia cameras** (UC San Diego, CA). The page reads the camera list and latest frames live.
+- **PhenoCam Network** vegetation cameras (U.S.). `build_context.py` saves the active cameras to `docs/data/phenocams.json` each day.
+- **U.S. Drought Monitor**, current week. `build_context.py` saves a simplified copy to `docs/data/usdm.geojson`.
+- **CA drought forecast by river basin** (UC Irvine CHRS, MSDI and SPI). The page reads it live from the ca-rx-planner repo's daily file, the same layer as the CA Prescribed Fire Planner.
+
+When a site is picked, the panel under the map lists the cameras within 40 km, showing first the ones currently looking toward the site, along with the drought category there.
